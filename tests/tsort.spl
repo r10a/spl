@@ -1,0 +1,38 @@
+var N = 9;
+type btree = { k: int, l: btree, r: btree };
+
+def insert (t: btree, i: int): btree {
+  if (t == ())
+     return { k = i, l = (), r = () }
+  else if (t.k <= i)
+     return { k = t.k, l = t.l, r = insert(t.r,i) }
+  else return { k = t.k, l = insert(t.l,i), r = t.r };
+};
+
+def readtree (): btree {
+  var i = 0;
+  var t: btree = ();
+  var a = 0;
+  while (i < N) {
+    read(a);
+    t = insert(t,a);
+    i = i + 1;
+  };
+  return t;
+};
+
+def writetree (t: btree) {
+  if (t == ())
+     return
+  else { 
+     writetree(t.l);
+     print(t.k);
+     writetree(t.r);
+  };
+};
+
+var t: btree = ();
+print("Give ",N," numbers:");
+t = readtree();
+print("Result:");
+writetree (t);

@@ -1,0 +1,47 @@
+/* testing arrays: squares a matrix */
+
+var SIZE = 5;
+var I = 0;
+var J = 0;
+var K = 0;
+var CELL= 0;
+
+var B = array(SIZE,0);
+var C = array(SIZE,array(SIZE,0));
+var D = array(SIZE,array(SIZE,0));
+
+I = 0;
+while (I < SIZE) {
+  C[I][I]= I+1;
+  I = I + 1;
+};
+
+I = 0;
+while (I < SIZE) {
+  J = 0;
+  while (J < SIZE) {
+    CELL=0;
+    K = 0;
+    while (K < SIZE) {
+      CELL = CELL + C[I][K]*C[K][J];
+      K = K + 1;
+    };
+    D[I][J] = CELL;
+    J = J + 1;
+  };
+  I = I + 1;
+};
+
+print("Input matrix"); 
+I = 0;
+while (I < SIZE) {
+  print(C[I][0],"  ",C[I][1],"  ",C[I][2],"  ",C[I][3],"  ",C[I][4]);
+  I = I + 1;
+};
+print();
+print("Input matrix squared"); 
+I = 0;
+while (I < SIZE) {
+  print(D[I][0],"  ",D[I][1],"  ",D[I][2],"  ",D[I][3],"  ",D[I][4]);
+  I = I + 1;
+};

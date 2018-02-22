@@ -1,0 +1,9 @@
+def hanoi (n: int, src: int, dst: int, tmp: int) {
+  if (n > 0) {
+     hanoi(n-1,src,tmp,dst);
+     print (n," ",src, " ", dst);
+     hanoi(n-1,tmp,dst,src);
+  };
+};
+
+hanoi(5,1,2,3);

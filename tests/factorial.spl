@@ -1,0 +1,12 @@
+/* Compute the factorial of a  number */
+
+var n = 0;
+  
+def fact (i: int): int {
+  if (i <= 0) return 1
+     else return i*fact(i-1);
+};
+
+print("Enter a number:");
+read(n);
+print(fact(n));

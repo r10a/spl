@@ -1,0 +1,26 @@
+var size = 8190;
+var IsPrime = array(size,true);
+var i = 0;
+var j = 0;
+var k = 0;
+var prime = 0;
+var count = 0;
+
+def mark (x :int) {
+  if (x < size) {
+     IsPrime[x] = false;
+     x = x + prime;
+     mark(x);
+  };
+};
+
+while (j < size) {
+  if (IsPrime[j] == true) {
+     prime = j + j + 3;
+     k = j + prime;
+     mark(k);
+     count = count + 1;
+  };
+  j = j + 1;
+};
+print("The number of prime numbers less than ", size, " is ", count);

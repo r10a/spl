@@ -1,0 +1,30 @@
+type tree = { left: tree, info: int, right: tree };
+var x: tree = { left=(), info=3, right=() };
+
+def preorder ( x: tree ) {
+  if (x <> ()) {
+     print(x.info);
+     preorder(x.left);
+     preorder(x.right);
+  };
+};
+
+def sum ( x: tree ): int {
+  if (x == ())
+     return 0
+  else return sum(x.left)+x.info+sum(x.right);
+};
+
+def reflect ( x: tree ): tree {
+  if (x == ())
+     return ()
+  else return { left=reflect(x.right), info=x.info, right=reflect(x.left) };
+};
+
+x.left = { left=(), info=2, right=() };
+x.right = { left=(), info=4, right=() };
+x.left.right = { left=x.right, info=5, right=() };
+preorder(x);
+print("SUM: ",sum(x));
+preorder(reflect(x));
+print("SUM: ",sum(x));

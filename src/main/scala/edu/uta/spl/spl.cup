@@ -1,0 +1,115 @@
+/********************************************************************************
+*
+* File: spl.cup
+* The SPL parser
+*
+********************************************************************************/
+
+package edu.uta.spl;
+
+import scala.collection.immutable.*;
+import scala.Tuple2;
+import java_cup.runtime.*;
+
+
+parser code {:
+
+    static int[] tokens = {
+      sym.error, sym.ID, sym.STRING_LITERAL, sym.INTEGER_LITERAL, sym.FLOAT_LITERAL,
+      sym.AND, sym.ARRAY, sym.BOOLEAN, sym.BY, sym.DEF, sym.DIV, sym.ELSE, sym.EQUAL, sym.EXIT, sym.FALSE,
+      sym.FLOAT, sym.FOR, sym.IF, sym.INT, sym.LOOP, sym.MOD,
+      sym.NOT, sym.OR, sym.PRINT, sym.READ, sym.RETURN, sym.STRING, sym.TO, sym.TYPE, sym.VAR, sym.WHILE,
+      sym.PLUS, sym.MINUS, sym.TIMES, sym.TRUE,
+      sym.LT, sym.LEQ, sym.GT, sym.GEQ, sym.EQ, sym.NEQ, sym.COLON, sym.SEMI,
+      sym.COMMA, sym.SHARP, sym.DOT, sym.LP, sym.RP, sym.LB, sym.RB, sym.LSB, sym.RSB
+    };
+
+    static String[] token_names = {
+      "error", "ID", "STRING_LITERAL", "INTEGER_LITERAL", "FLOAT_LITERAL",
+      "AND &&", "ARRAY", "BOOLEAN", "BY", "DEF", "DIV /", "ELSE", "EQUAL", "EXIT", "FALSE",
+      "FLOAT", "FOR", "IF", "INT", "LOOP", "MOD %",
+      "NOT", "OR ||", "PRINT", "READ", "RETURN", "STRING", "TO", "TYPE", "VAR", "WHILE",
+      "PLUS +", "MINUS -", "TIMES *", "TRUE",
+      "LT <", "LEQ <=", "GT >", "GEQ >=", "EQ ==", "NEQ <>", "COLON :", "SEMI ;",
+      "COMMA ,", "SHARP #", "DOT .", "LP (", "RP )", "LB "+'{', "RB "+'}', "LSB [", "RSB ]"
+    };
+
+    public static String print ( Symbol s ) {
+        for ( int i = 0; i < tokens.length; i++ ) {
+            if (tokens[i] == s.sym) {
+                String res = token_names[i] + " ";
+                if (s.value == null)
+                    return res;
+                else if (s.value instanceof Integer)
+                    return res + ((Integer) s.value).intValue();
+                else if (s.value instanceof Float)
+                    return res + ((Float) s.value).floatValue();
+                else if (s.value instanceof String)
+                    return res + "\"" + (String) s.value + "\"";
+            }
+        };
+        return "?";
+    }
+
+    public void syntax_error ( Symbol token ) {
+        System.err.println("*** Syntax Error: " + print(token) + " (line: " + token.left
+                           + ", column: " + token.right + ")");
+        System.exit(1);
+    }
+
+    /** nil is the empty list */
+    final static List nil = Nil$.MODULE$;
+
+    /** Append list2 at the end of list1 (ie, return a new list containing
+        the elements from list1 followed by the elements from list2) */
+    static<T> List<T> append ( List<T> list1, List<T> list2 ) {
+        return list1.$colon$colon$colon(list2);
+    }
+
+    /** append the element elem at the end of the list
+       (ie, return a new list containing the list followed by the elem) */
+    static<T> List<T> append ( List<T> list, T elem ) {
+        return nil.$colon$colon(elem).$colon$colon$colon(list);
+    }
+
+    /** Insert the element elem at the beginning of the list
+        (ie, return a new list containing the elem followed by the list) */
+    static<T> List<T> add ( T elem, List<T> list ) {
+        return list.$colon$colon(elem);
+    }
+
+:};
+
+/* Terminals (tokens returned by the scanner). */
+terminal String  ID, STRING_LITERAL;
+terminal Integer INTEGER_LITERAL;
+terminal Float   FLOAT_LITERAL;
+terminal         AND, ARRAY, BOOLEAN, BY, DEF, DIV, ELSE, EQUAL, EXIT, FALSE,
+                 FLOAT, FOR, IF, INT, LOOP, MOD,
+                 NOT, OR, PRINT, READ, RETURN, STRING, TO, TYPE, VAR, WHILE,
+                 PLUS, MINUS, TIMES, TRUE, LT, LEQ, GT, GEQ, EQ, NEQ, COLON, SEMI,
+                 COMMA, SHARP, DOT, LP, RP, LB, RB, LSB, RSB, UMINUS;
+
+non terminal Program                         program;
+non terminal BlockSt                         block_content;
+non terminal List<Definition>                defs;
+non terminal Stmt                            stmt;
+non terminal List<Stmt>                      stmts;
+non terminal Expr                            expr;
+
+start with program;
+
+program         ::= block_content:b                     {: SPL.setAST(new Program(b)); :}
+                ;
+block_content   ::= defs:dl stmts:sl                    {: RESULT = new BlockSt(dl,sl); :}
+                |   stmts:sl                            {: RESULT = new BlockSt(nil,sl); :}
+                ;
+defs            ::= DEF
+                ;
+expr            ::= INTEGER_LITERAL:n                   {: RESULT = new IntConst(n); :}
+                ;
+stmt            ::= WHILE LP expr:e RP stmt:s           {: RESULT = new WhileSt(e,s); :}
+                ;
+stmts           ::= stmt:s SEMI                         {: RESULT = append(nil,s); :}
+                |   stmts:sl stmt:s SEMI                {: RESULT = append(sl,s); :}
+                ;

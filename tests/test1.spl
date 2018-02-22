@@ -1,0 +1,12 @@
+var x: int = 6;
+var y: int = 3;
+
+def f (a : int) {
+  var i: int = 2;
+  print(a);
+  for ( k = 1 to a )
+      print(k);
+};
+
+f(x+1);
+print(x+y*2);

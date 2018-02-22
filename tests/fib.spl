@@ -1,0 +1,33 @@
+/* Compute Fibonacci numbers */
+
+var N = 40;
+var I = 0;
+var fibbs = array(N,0);
+var j = 0;
+var n = 0;
+  
+def init (a : array[int]) {
+  var i: int = 2;
+  a[0] = 1;
+  a[1] = 1;
+  while (i < N - 1) {
+    a[i] = I;
+    i = i + 1;
+ };
+};
+
+def fibb (i: int): int {
+  if (fibbs[i] == I)
+     fibbs[i] = fibb(i-2) + fibb(i-1);
+  return fibbs[i];
+};
+
+init(fibbs);
+print("Enter indices of eight fibbonacci numbers:");
+while (j < 8) {
+  read(n);
+  if (n >= N)
+     print("Maximum index is ", N-1)
+  else print(n, " ", fibb(n));
+  j = j + 1;
+};

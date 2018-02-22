@@ -1,0 +1,5 @@
+type rec = { a: int, b: int };
+var x = { a = 23, b = 67 };
+
+x.a = 89;
+print(x.a,"  ",x.b);

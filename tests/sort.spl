@@ -1,0 +1,73 @@
+var N = 10;
+var a = array(N,0);
+
+def quicksort ( a: array[int], m: int, n: int ) {
+  var i = 0; 
+
+  def exchange (p: int, q: int) {
+    var x = a[p];
+    a[p] = a[q];
+    a[q] = x;
+  };
+
+  def partition ( y: int, z: int ): int {
+    var i = y;
+    var j = z + 1;
+
+    def meet () {
+
+      def up () {
+        i = i + 1;
+        if (i < N)
+           if (a[i] < a[y])
+              up();
+      };
+
+      def down () {
+        j = j - 1;
+        if (a[j] > a[y])
+           down();
+      };
+
+      if (i < j) {
+         up();
+         down();
+         if (i < j) exchange(i,j);
+         meet();
+      };
+    };
+
+    meet();
+    exchange(y,j);
+    return j;
+  };
+
+  if (n > m) {
+     i = partition(m,n);
+     quicksort(a,m,i-1);
+     quicksort(a,i+1,n);
+  };
+};
+
+def readarray () {
+  var i = 0;
+  while (i < N - 1) {
+    read(a[i]);
+    i = i + 1;
+  };
+  a[i] = -1000;
+};
+
+def writearray () {
+  var i = 0;
+  while (i < N - 1) {
+    print(a[i]);
+    i = i + 1;
+  };
+};
+
+print ("Give 9 integers:");
+readarray();
+print("The sorted numbers are:");
+quicksort(a,0,N-2);
+writearray();
