@@ -83,33 +83,133 @@ parser code {:
 /* Terminals (tokens returned by the scanner). */
 terminal String  ID, STRING_LITERAL;
 terminal Integer INTEGER_LITERAL;
-terminal Float   FLOAT_LITERAL;
+terminal Float 	 FLOAT_LITERAL;
 terminal         AND, ARRAY, BOOLEAN, BY, DEF, DIV, ELSE, EQUAL, EXIT, FALSE,
                  FLOAT, FOR, IF, INT, LOOP, MOD,
-                 NOT, OR, PRINT, READ, RETURN, STRING, TO, TYPE, VAR, WHILE,
+                 NOT, OR, PRINT, READ, RETURN, STRING, TO, TYPE, VAR, WHILE, UMINUS,
                  PLUS, MINUS, TIMES, TRUE, LT, LEQ, GT, GEQ, EQ, NEQ, COLON, SEMI,
-                 COMMA, SHARP, DOT, LP, RP, LB, RB, LSB, RSB, UMINUS;
+                 COMMA, SHARP, DOT, LP, RP, LB, RB, LSB, RSB;
 
-non terminal Program                         program;
-non terminal BlockSt                         block_content;
-non terminal List<Definition>                defs;
-non terminal Stmt                            stmt;
-non terminal List<Stmt>                      stmts;
-non terminal Expr                            expr;
+non terminal program;
+non terminal block_content;
+non terminal def;
+non terminal defs;
+non terminal params;
+non terminal type;
+non terminal returntype;
+non terminal lvalue;
+non terminal lvaluelist;
+non terminal expr;
+non terminal exprlist;
+non terminal unaryOp;
+non terminal binaryOp;
+non terminal stmt;
+non terminal stmts;
+non terminal bystat;
+
+precedence nonassoc	ELSE;
+precedence right EQUAL;
+precedence right AND, OR, DOT;
+precedence left	LT, GT, LEQ, GEQ, NEQ, EQ;
+
+precedence left	PLUS, MINUS;
+precedence left	TIMES, DIV, MOD;
+
+precedence left UMINUS, NOT;
 
 start with program;
 
-program         ::= block_content:b                     {: SPL.setAST(new Program(b)); :}
+program         ::= block_content                  
                 ;
-block_content   ::= defs:dl stmts:sl                    {: RESULT = new BlockSt(dl,sl); :}
-                |   stmts:sl                            {: RESULT = new BlockSt(nil,sl); :}
+block_content   ::= defs stmts
+				| stmts                
                 ;
-defs            ::= DEF
+defs            ::= defs def SEMI
+				| def SEMI
+				;           
+def				::= VAR ID EQUAL expr
+				| VAR ID COLON type EQUAL expr
+				| TYPE ID EQUAL type
+				| DEF ID LP params RP returntype LB block_content RB 
+				;
+params			::= ID COLON type COMMA params
+				| ID COLON type
+				| type COMMA params
+				| type
+				|
+				;
+returntype		::= COLON type
+				|
+				;
+type			::= INT 
+				| FLOAT
+				| STRING
+				| BOOLEAN
+				| ID
+				| ARRAY LSB type RSB
+				| LB params RB
+				| LP params RP
+				;
+lvalue			::= ID
+				| lvalue LSB expr RSB
+				| lvalue DOT ID
+				| lvalue SHARP INTEGER_LITERAL
+				;				                
+expr            ::= INTEGER_LITERAL
+				| FLOAT_LITERAL
+				| STRING_LITERAL
+				| TRUE
+				| FALSE
+				| lvalue
+				| unaryOp expr
+				| expr binaryOp expr
+				| ARRAY LP expr COMMA expr RP
+				| ID LP exprlist RP 
+				| LB ID EQUAL exprlist RB
+				| LP exprlist RP
+				| LSB exprlist RSB
                 ;
-expr            ::= INTEGER_LITERAL:n                   {: RESULT = new IntConst(n); :}
-                ;
-stmt            ::= WHILE LP expr:e RP stmt:s           {: RESULT = new WhileSt(e,s); :}
-                ;
-stmts           ::= stmt:s SEMI                         {: RESULT = append(nil,s); :}
-                |   stmts:sl stmt:s SEMI                {: RESULT = append(sl,s); :}
-                ;
+exprlist		::= expr COMMA exprlist
+				| expr COMMA ID EQUAL exprlist
+				| expr
+				|
+				;
+lvaluelist		::= lvalue COMMA lvaluelist
+				| lvalue
+				;
+unaryOp 		::=  MINUS 
+				| NOT
+				;
+binaryOp		::= PLUS
+				| MINUS
+				| TIMES
+				| DIV
+				| MOD
+				| AND
+				| OR
+				| EQ
+				| NEQ
+				| LT
+				| LEQ
+				| GT
+				| GEQ
+				;	
+stmts           ::= stmts stmt SEMI
+                | stmt SEMI
+                ;							
+stmt            ::= lvalue EQUAL expr
+				| ID LP exprlist RP
+				| LB block_content RB
+				| READ LP lvaluelist RP
+				| PRINT LP exprlist RP
+				| IF LP expr RP stmt
+				| IF LP expr RP stmt ELSE stmt
+				| FOR LP ID EQUAL expr TO expr bystat RP stmt
+				| WHILE LP expr RP stmt
+				| LOOP stmt
+				| EXIT
+				| RETURN exprlist
+				;
+bystat			::= BY expr
+				| 
+				;
