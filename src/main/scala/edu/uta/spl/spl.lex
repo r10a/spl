@@ -90,7 +90,7 @@ ID=[a-zA-Z][a-zA-Z0-9_]*
 "]"						{ return new Symbol(sym.RSB); }
 ","						{ return new Symbol(sym.COMMA); }
 \"[^\"]*\"				{ return new Symbol(sym.STRING_LITERAL, yytext().substring(1,yytext().length()-1)); }
-{DIGIT}+        		{ return new Symbol(sym.INTEGER_LITERAL, yytext()); }
-{DIGIT}+"."{DIGIT}+  	{ return new Symbol(sym.FLOAT_LITERAL, yytext()); }
+{DIGIT}+        		{ return new Symbol(sym.INTEGER_LITERAL, Integer.parseInt(yytext())); }
+{DIGIT}+"."{DIGIT}+  	{ return new Symbol(sym.FLOAT_LITERAL, Float.parseFloat(yytext())); }
 {ID}		            { return new Symbol(sym.ID, yytext()); }
 .           		    { lexical_error("Illegal character", yytext()); }

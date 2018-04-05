@@ -90,126 +90,124 @@ terminal         AND, ARRAY, BOOLEAN, BY, DEF, DIV, ELSE, EQUAL, EXIT, FALSE,
                  PLUS, MINUS, TIMES, TRUE, LT, LEQ, GT, GEQ, EQ, NEQ, COLON, SEMI,
                  COMMA, SHARP, DOT, LP, RP, LB, RB, LSB, RSB;
 
-non terminal program;
-non terminal block_content;
-non terminal def;
-non terminal defs;
-non terminal params;
-non terminal type;
-non terminal returntype;
-non terminal lvalue;
-non terminal lvaluelist;
-non terminal expr;
-non terminal exprlist;
-non terminal unaryOp;
-non terminal binaryOp;
-non terminal stmt;
-non terminal stmts;
-non terminal bystat;
+non terminal Program program;
+non terminal BlockSt block_content;
+non terminal Definition def;
+non terminal List<Definition> defs;
+non terminal List<Bind<Type>> params;
+non terminal List<Bind<Expr>> reclist;
+non terminal Bind<Expr> rec;
+
+non terminal Type type;
+non terminal Type returntype;
+non terminal Lvalue lvalue;
+non terminal List<Lvalue> lvaluelist;
+non terminal Expr expr;
+non terminal List<Expr> exprlist;
+non terminal Stmt stmt;
+non terminal List<Stmt> stmts;
 
 precedence nonassoc	ELSE;
-precedence right EQUAL;
-precedence right AND, OR, DOT;
-precedence left	LT, GT, LEQ, GEQ, NEQ, EQ;
-
+precedence left AND, OR;
+precedence left NOT;
+precedence nonassoc EQ, LT, GT, LEQ, GEQ, NEQ;
 precedence left	PLUS, MINUS;
 precedence left	TIMES, DIV, MOD;
-
-precedence left UMINUS, NOT;
+precedence left UMINUS;
 
 start with program;
 
-program         ::= block_content                  
+program         ::= block_content:b   							{: SPL.setAST(new Program(b)); :}                  
                 ;
-block_content   ::= defs stmts
-				| stmts                
+block_content   ::= defs:dl stmts:sl							{: RESULT = new BlockSt(dl,sl); :}
+				| stmts:sl       								{: RESULT = new BlockSt(nil,sl); :}         
                 ;
-defs            ::= defs def SEMI
-				| def SEMI
+defs            ::= defs:dl def:d SEMI							{: RESULT = append(dl, d); :}
+				| def:d SEMI									{: RESULT = add(d, nil); :}
 				;           
-def				::= VAR ID EQUAL expr
-				| VAR ID COLON type EQUAL expr
-				| TYPE ID EQUAL type
-				| DEF ID LP params RP returntype LB block_content RB 
+def				::= VAR ID:i EQUAL expr:e						{: RESULT = new VarDef(i, new AnyType(), e); :}
+				| VAR ID:i COLON type:t EQUAL expr:e			{: RESULT = new VarDef(i, t, e); :}
+				| TYPE ID:i EQUAL type:t						{: RESULT = new TypeDef(i, t); :}
+				| DEF ID:i LP params:pl RP returntype:r LB block_content:b RB {: RESULT = new FuncDef(i, pl, r, b); :}
 				;
-params			::= ID COLON type COMMA params
-				| ID COLON type
+params			::= ID:i COLON type:t COMMA params:pl			{: RESULT = add(new Bind<Type>(i, t), pl); :}
+				| ID:i COLON type:t								{: RESULT = add(new Bind<Type>(i, t), nil); :}
 				| type COMMA params
 				| type
-				|
+				|												{: RESULT = nil; :}
 				;
-returntype		::= COLON type
-				|
+returntype		::= COLON type:t								{: RESULT = t; :}
+				|												{: RESULT = new NoType(); :}
 				;
-type			::= INT 
-				| FLOAT
-				| STRING
-				| BOOLEAN
-				| ID
-				| ARRAY LSB type RSB
-				| LB params RB
+type			::= INT 										{: RESULT = new IntType(); :}
+				| FLOAT											{: RESULT = new FloatType(); :}
+				| STRING										{: RESULT = new StringType(); :}
+				| BOOLEAN										{: RESULT = new BooleanType(); :}
+				| ID:i											{: RESULT = new NamedType(i); :}
+				| ARRAY LSB type:t RSB							{: RESULT = new ArrayType(t); :}
+				| LB params:pl RB								{: RESULT = new RecordType(pl); :}
 				| LP params RP
 				;
-lvalue			::= ID
-				| lvalue LSB expr RSB
-				| lvalue DOT ID
-				| lvalue SHARP INTEGER_LITERAL
+lvalue			::= ID:i										{: RESULT = new Var(i); :}
+				| lvalue:l LSB expr:e RSB						{: RESULT = new ArrayDeref(new LvalExp(l), e); :}
+				| lvalue:l DOT ID:i								{: RESULT = new RecordDeref(new LvalExp(l), i); :}
+				| lvalue:l SHARP INTEGER_LITERAL:i				{: RESULT = new TupleDeref(new LvalExp(l), i); :}
 				;				                
-expr            ::= INTEGER_LITERAL
-				| FLOAT_LITERAL
-				| STRING_LITERAL
-				| TRUE
-				| FALSE
-				| lvalue
-				| unaryOp expr
-				| expr binaryOp expr
-				| ARRAY LP expr COMMA expr RP
-				| ID LP exprlist RP 
-				| LB ID EQUAL exprlist RB
-				| LP exprlist RP
-				| LSB exprlist RSB
+expr            ::= INTEGER_LITERAL:n							{: RESULT = new IntConst(n); :}		
+				| FLOAT_LITERAL:f								{: RESULT = new FloatConst(f); :}
+				| STRING_LITERAL:s								{: RESULT = new StringConst(s); :}
+				| TRUE											{: RESULT = new BooleanConst(true); :}
+				| FALSE											{: RESULT = new BooleanConst(false); :}
+				| lvalue:l										{: RESULT = new LvalExp(l); :}
+				| MINUS expr:e				  					{: RESULT = new UnOpExp("minus", e); :}
+				| NOT expr:e 									{: RESULT = new UnOpExp("not", e); :}
+				| expr:e1 PLUS expr:e2							{: RESULT = new BinOpExp("plus", e1, e2); :}
+				| expr:e1 MINUS expr:e2							{: RESULT = new BinOpExp("minus", e1, e2); :}
+				| expr:e1 TIMES expr:e2			 				{: RESULT = new BinOpExp("times", e1, e2); :}
+				| expr:e1 DIV expr:e2						 	{: RESULT = new BinOpExp("div", e1, e2); :}
+				| expr:e1 MOD expr:e2						 	{: RESULT = new BinOpExp("mod", e1, e2); :}
+				| expr:e1 AND expr:e2						 	{: RESULT = new BinOpExp("and", e1, e2); :}
+				| expr:e1 OR expr:e2						 	{: RESULT = new BinOpExp("or", e1, e2); :}
+				| expr:e1 EQ expr:e2						 	{: RESULT = new BinOpExp("eq", e1, e2); :}
+				| expr:e1 NEQ expr:e2						 	{: RESULT = new BinOpExp("neq", e1, e2); :}
+				| expr:e1 LT expr:e2						 	{: RESULT = new BinOpExp("lt", e1, e2); :}
+				| expr:e1 LEQ expr:e2						 	{: RESULT = new BinOpExp("leq", e1, e2); :}
+				| expr:e1 GT expr:e2						 	{: RESULT = new BinOpExp("gt", e1, e2); :}
+				| expr:e1 GEQ expr:e2							{: RESULT = new BinOpExp("geq", e1, e2); :}
+				| ARRAY LP expr:e1 COMMA expr:e2 RP 			{: RESULT = new ArrayGen(e1, e2); :}
+				| ID:i LP exprlist:el RP 						{: RESULT = new CallExp(i, el); :}
+				| LB reclist:rl RB								{: RESULT = new RecordExp(rl); :}
+				| LP RP											{: RESULT = new NullExp(); :}
+				| LSB exprlist:el RSB							{: RESULT = new ArrayExp(el); :}
                 ;
-exprlist		::= expr COMMA exprlist
-				| expr COMMA ID EQUAL exprlist
-				| expr
-				|
+exprlist		::= expr:e COMMA exprlist:el					{: RESULT = add(e, el); :}
+				| expr:e										{: RESULT = add(e, nil); :}
+				|												{: RESULT = nil; :}
 				;
-lvaluelist		::= lvalue COMMA lvaluelist
-				| lvalue
+reclist			::= rec:r COMMA reclist:rl						{: RESULT = add(r, rl); :}
+				| rec:r											{: RESULT = add(r, nil); :}
 				;
-unaryOp 		::=  MINUS 
-				| NOT
+rec				::= ID:i EQUAL expr:e							{: RESULT = new Bind<Expr>(i, e); :}
+				|							
 				;
-binaryOp		::= PLUS
-				| MINUS
-				| TIMES
-				| DIV
-				| MOD
-				| AND
-				| OR
-				| EQ
-				| NEQ
-				| LT
-				| LEQ
-				| GT
-				| GEQ
-				;	
-stmts           ::= stmts stmt SEMI
-                | stmt SEMI
+lvaluelist		::= lvaluelist:ll lvalue:l COMMA  				{: RESULT = append(ll ,l); :}
+				| lvalue:l										{: RESULT = add(l ,nil); :}
+				;
+stmts           ::= stmts:sl stmt:s SEMI						{: RESULT = append(sl, s); :}
+                | stmt:s SEMI									{: RESULT = add(s, nil); :}
                 ;							
-stmt            ::= lvalue EQUAL expr
-				| ID LP exprlist RP
-				| LB block_content RB
-				| READ LP lvaluelist RP
-				| PRINT LP exprlist RP
-				| IF LP expr RP stmt
-				| IF LP expr RP stmt ELSE stmt
-				| FOR LP ID EQUAL expr TO expr bystat RP stmt
-				| WHILE LP expr RP stmt
-				| LOOP stmt
-				| EXIT
-				| RETURN exprlist
-				;
-bystat			::= BY expr
-				| 
+stmt            ::= lvalue:l EQUAL expr:e						{: RESULT = new AssignSt(l, e); :}
+				| ID:i LP exprlist:el RP						{: RESULT = new CallSt(i, el); :}
+				| LB block_content:b RB							{: RESULT = b; :}
+				| READ LP lvaluelist:ll RP						{: RESULT = new ReadSt(ll); :}
+				| PRINT LP exprlist:el RP						{: RESULT = new PrintSt(el); :}
+				| IF LP expr:e RP stmt:s						{: RESULT = new IfSt(e, s, null); :}
+				| IF LP expr:e RP stmt:s1 ELSE stmt:s2			{: RESULT = new IfSt(e, s1, s2); :}
+				| FOR LP ID:i EQUAL expr:e1 TO expr:e2 RP stmt:s			{: RESULT = new ForSt(i, e1, e2, new IntConst(1), s); :}
+				| FOR LP ID:i EQUAL expr:e1 TO expr:e2 BY expr:e3 RP stmt:s {: RESULT = new ForSt(i, e1, e2, e3, s); :}
+				| WHILE LP expr:e RP stmt:s						{: RESULT = new WhileSt(e, s); :}
+				| LOOP stmt:s									{: RESULT = new LoopSt(s); :}
+				| EXIT											{: RESULT = new ExitSt(); :}
+				| RETURN expr:e									{: RESULT = new ReturnValueSt(e); :}
+				| RETURN										{: RESULT = new ReturnSt(); :}
 				;
