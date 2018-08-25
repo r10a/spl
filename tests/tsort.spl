@@ -1,6 +1,6 @@
 var N = 9;
 type btree = { k: int, l: btree, r: btree };
-
+type l = { k: tree };
 def insert (t: btree, i: int): btree {
   if (t == ())
      return { k = i, l = (), r = () }

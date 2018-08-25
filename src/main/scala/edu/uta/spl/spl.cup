@@ -178,6 +178,7 @@ expr            ::= INTEGER_LITERAL:n							{: RESULT = new IntConst(n); :}
 				| ID:i LP exprlist:el RP 						{: RESULT = new CallExp(i, el); :}
 				| LB reclist:rl RB								{: RESULT = new RecordExp(rl); :}
 				| LP RP											{: RESULT = new NullExp(); :}
+				| LP expr:e RP									{: RESULT = e; :}
 				| LSB exprlist:el RSB							{: RESULT = new ArrayExp(el); :}
                 ;
 exprlist		::= expr:e COMMA exprlist:el					{: RESULT = add(e, el); :}

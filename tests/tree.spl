@@ -23,7 +23,7 @@ def reflect ( x: tree ): tree {
 
 x.left = { left=(), info=2, right=() };
 x.right = { left=(), info=4, right=() };
-x.left.right = { left=x.right, info=5, right=() };
+/*x.left.right = { left=x.right, info=5, right=() };*/
 preorder(x);
 print("SUM: ",sum(x));
 preorder(reflect(x));

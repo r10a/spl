@@ -61,6 +61,7 @@ object SPL {
                 if (phase == 6) {
                    val mipsgenerator: MipsGenerator = new Mips
                    out = new PrintStream(file.dropRight(5)+".s")
+                   mipsgenerator.initialCode()
                    for ( s <- nir ) {
                       mipsgenerator.clear
                       val prettyprinter = new PrettyPrint(80,"# ")

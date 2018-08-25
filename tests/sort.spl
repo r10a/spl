@@ -3,7 +3,6 @@ var a = array(N,0);
 
 def quicksort ( a: array[int], m: int, n: int ) {
   var i = 0; 
-
   def exchange (p: int, q: int) {
     var x = a[p];
     a[p] = a[q];
